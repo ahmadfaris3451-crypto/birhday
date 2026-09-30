@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surprise Email</title>
+    <style>
+        body { 
+            margin: 0; padding: 0; background-color: black; 
+            overflow-x: hidden; font-family: 'Courier New', Courier, monospace; color: white;
+        }
+
+        /* --- 1. LATAR BELAKANG MATRIX --- */
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
+
+        /* --- STAGE PENGURUSAN --- */
+        .stage { 
+            display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+        }
+        .stage.active { display: flex; }
+
+        /* --- ANIMASI --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+        /* --- KELAS LIQUID GLASS SERAGAM --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(18px); 
+            -webkit-backdrop-filter: blur(18px);
+            
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 1.5px solid rgba(255, 255, 255, 0.6);
+            border-left: 1.5px solid rgba(255, 255, 255, 0.6);
+            
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            animation: popUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* --- STAGE 1: KIRAAN DETIK TEKS --- */
+        #text-overlay {
+            font-size: 70px; font-weight: bold; color: #ff66b2;
+            text-shadow: 0 0 15px #ff66b2, 0 0 30px #ff66b2; text-align: center;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            opacity: 0; transform: scale(0.5);
+        }
+
+        /* --- STAGE 2: NOTIFIKASI E-MEL --- */
+        #stage-notification .glass-panel {
+            padding: 40px; text-align: center;
+        }
+        .notif-text { 
+            font-family: 'Comic Sans MS', cursive, sans-serif; font-size: 28px; 
+            color: #ffffff; margin: 15px 0; font-weight: bold;
+            text-shadow: 0 2px 10px rgba(255, 102, 178, 0.8); 
+        }
+        .envelope-icon {
+            width: 120px; height: 80px; background: linear-gradient(135deg, #ff4d4d, #b30000); position: relative;
+            margin: 20px auto; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; display: flex;
+            justify-content: center; align-items: center; border-radius: 8px; box-shadow: 0 8px 20px rgba(255, 77, 77, 0.5);
+            animation: float 3s infinite ease-in-out;
+        }
+        .envelope-icon:hover { transform: scale(1.1) rotate(-5deg); box-shadow: 0 12px 30px rgba(255, 77, 77, 0.7); }
+        .envelope-icon::after { content: "💌"; font-size: 40px; }
+
+        /* --- STAGE 3: BUTIRAN E-MEL --- */
+        #stage-email .glass-panel {
+            padding: 40px; text-align: left; width: 80%; max-width: 500px;
+            font-size: 20px; line-height: 2; color: #ffffff;
+        }
+        .email-label { color: #ff99cc; font-weight: bold; text-shadow: 0 0 5px rgba(255, 153, 204, 0.5); }
+        .email-link {
+            display: inline-block; margin-top: 30px; padding: 12px 20px; background: linear-gradient(135deg, #ff4d4d, #cc0000); color: white;
+            text-decoration: none; font-weight: bold; border-radius: 25px; cursor: pointer;
+            transition: all 0.3s; text-align: center; width: 100%; box-sizing: border-box; box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+        }
+        .email-link:hover { background: linear-gradient(135deg, #ff66b2, #ff1a8c); box-shadow: 0 8px 25px #ff66b2; letter-spacing: 2px; }
+
+        /* --- STAGE 4: POSTCARD AKHIR --- */
+        #stage-postcard { justify-content: flex-start; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; }
+        #stage-postcard .glass-panel {
+            padding: 40px 30px; max-width: 600px; width: 100%; margin: 0 auto; text-align: center;
+        }
+        .bunting { font-size: 35px; margin-bottom: 20px; letter-spacing: 5px; animation: float 4s infinite ease-in-out; }
+        .photo-container {
+            width: 250px; height: 250px; margin: 0 auto 20px; background: rgba(255, 255, 255, 0.9);
+            padding: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); transform: rotate(-3deg);
+            border-radius: 8px; transition: transform 0.4s ease-out;
+        }
+        .photo-container:hover { transform: rotate(0deg) scale(1.05); box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+        .long-message {
+            font-family: 'Arial', sans-serif; font-size: 16px; line-height: 1.8; text-align: left;
+            color: #ffffff; margin-top: 20px; font-weight: 500; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+        .signature { font-family: 'Comic Sans MS', cursive, sans-serif; color: #ff66b2; font-size: 20px; margin-top: 25px; font-weight: bold; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Latar Belakang Matrix -->
+    <canvas id="matrix-bg"></canvas>
+
+    <!-- Stage 1: Teks -->
+    <div id="stage-countdown" class="stage active">
+        <div id="text-overlay"></div>
+    </div>
+
+    <!-- Stage 2: Notifikasi -->
+    <div id="stage-notification" class="stage">
+        <div class="glass-panel">
+            <div class="envelope-icon" onclick="showEmailDetails()"></div>
+            <div class="notif-text">you've got new emails</div>
+        </div>
+    </div>
+
+    <!-- Stage 3: E-mel -->
+    <div id="stage-email" class="stage">
+        <div class="glass-panel">
+            <div><span class="email-label">From:</span> Ibu</div>
+            <div><span class="email-label">To:</span> Faiz</div>
+            <div><span class="email-label">Message:</span> Check out this awesome surprise for YOU!</div>
+            <div class="email-link" onclick="showPostcard()">see attachment 📎</div>
+        </div>
+    </div>
+
+    <!-- Stage 4: Postcard -->
+    <div id="stage-postcard" class="stage">
+        <div class="glass-panel">
+            <div class="bunting">🎉🎈🎀🎈🎉</div>
+            
+            <div class="photo-container">
+                <!-- GAMBAR DARI FAIL -->
+                <img src="gambar-faiz.jpg" alt="Gambar Faiz">
+            </div>
+            
+            <div class="long-message">
+                Untuk Anak Ibu Yang Disayangi, Iz,<br><br>
+
+                Selamat Hari Jadi yang ke 17tahun, Sayang.<br><br>
+
+                Di hari istimewa ini, Ibu cuma nak Iz tahu satu perkara. Ibu sayang Iz sepenuh hati. Sayang tanpa syarat. Sayang walau dalam keadaan apa pun.<br><br>
+
+                Ibu tahu, tahun ini bukan tahun yang mudah untuk Iz. Ada hari yang berat, ada hari yang rasa kosong, ada hari yang senyum pun terasa penat. Dan Ibu nampak betapa kuatnya Iz bertahan sampai ke hari ini. Terima kasih sebab masih di sini. Terima kasih sebab masih berjuang.<br><br>
+
+                Iz tak perlu jadi hebat untuk disayangi. Iz tak perlu sentiasa gembira untuk Ibu bangga. Cukup Iz jadi Iz. Itu pun dah lebih dari cukup buat Ibu.<br><br>
+
+                Di hari lahir Iz ini, Ibu tak minta banyak. Ibu cuma doa:<br><br>
+
+                Semoga Allah peluk hati Iz seerat-eratnya. Semoga Allah angkat rasa berat itu sedikit demi sedikit. Semoga Allah gantikan tangis dengan tenang, dan gantikan resah dengan rehat.<br><br>
+
+                Semoga Iz diberi ketenangan hati, kekuatan jiwa, dan dikelilingi orang-orang yang ikhlas menyayangi Iz.<br><br>
+
+                Ingat ya Iz, Iz tidak keseorangan. Rumah ini sentiasa ada untuk Iz. Bahu Ibu sentiasa ada untuk Iz bersandar. Ceritalah apa saja, bila-bila masa pun. Kita hadapi sama-sama.<br><br>
+
+                Selamat Hari Jadi, Anak Kuat Ibu.<br>
+                Terima kasih sebab lahir ke dunia ini dan menjadi anak Ibu.<br><br>
+
+                Ibu sayang Iz lebih kata-kata yang diungkap.
+            </div>
+            <div class="signature">🎂 Peluk kuat dari Ibu 🎂</div>
+        </div>
+    </div>
+
+    <script>
+        /* === LOGIK MATRIX === */
+        const canvas = document.getElementById('matrix-bg');
+        const canvasCtx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const letters = '01♥'.split(''); 
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        
+        for(let x = 0; x < columns; x++) {
+            drops[x] = Math.floor(Math.random() * (canvas.height / fontSize));
+        }
+
+        setInterval(drawMatrix, 50);
+
+        function drawMatrix() {
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            canvasCtx.fillStyle = '#ff66b2'; 
+            canvasCtx.font = fontSize + 'px arial';
+            for(let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                canvasCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        /* === LOGIK TEKS === */
+        const overlay = document.getElementById('text-overlay');
+        const sequence = ["3", "2", "1", "HAPPY", "BIRTHDAY", "TO", "FAIZ", "❤️"];
+        let seqIndex = 0;
+
+        function animateText() {
+            if (seqIndex < sequence.length) {
+                overlay.innerText = sequence[seqIndex];
+                overlay.style.opacity = 1;
+                overlay.style.transform = 'scale(1)';
+                
+                setTimeout(() => {
+                    overlay.style.opacity = 0;
+                    overlay.style.transform = 'scale(0.5)';
+                    seqIndex++;
+                    setTimeout(animateText, 500); 
+                }, 1000); 
+            } else {
+                document.getElementById('stage-countdown').classList.remove('active');
+                document.getElementById('stage-notification').classList.add('active');
+            }
+        }
+        
+        setTimeout(animateText, 500); 
+
+        /* === NAVIGASI SKRIN === */
+        function showEmailDetails() {
+            document.getElementById('stage-notification').classList.remove('active');
+            document.getElementById('stage-email').classList.add('active');
+        }
+
+        function showPostcard() {
+            document.getElementById('stage-email').classList.remove('active');
+            document.getElementById('stage-postcard').classList.add('active');
+            document.body.style.overflowY = 'auto'; 
+        }
+    </script>
+</body>
+</html>
